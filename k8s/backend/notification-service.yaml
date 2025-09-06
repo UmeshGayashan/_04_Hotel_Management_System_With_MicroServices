@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: notification-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8005
+        env:
+        - name: DATABASE_URL
+          value: "mysql+pymysql://root:rootpassword@notification-mysql:3306/notification_db"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: SECRET_KEY
+          value: "your-secret-key-here"
+        - name: CORS_ORIGINS
+          value: "*"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+spec:
+  ports:
+  - port: 8005
+    targetPort: 8005
+  selector:
+    app: notification-service

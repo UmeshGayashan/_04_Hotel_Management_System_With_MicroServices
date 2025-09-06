@@ -17,12 +17,17 @@ cleanup_all() {
     kubectl delete -f k8s/backend/hotel-service.yaml --ignore-not-found=true
     kubectl delete -f k8s/backend/booking-service.yaml --ignore-not-found=true
     kubectl delete -f k8s/backend/payment-service.yaml --ignore-not-found=true
+    kubectl delete -f k8s/backend/notification-service.yaml --ignore-not-found=true
+    
+    # Delete Kafka
+    kubectl delete -f k8s/kafka/kafka.yaml --ignore-not-found=true
     
     # Delete MySQL databases
     kubectl delete -f k8s/mysql/auth-mysql.yaml --ignore-not-found=true
     kubectl delete -f k8s/mysql/hotel-mysql.yaml --ignore-not-found=true
     kubectl delete -f k8s/mysql/booking-mysql.yaml --ignore-not-found=true
     kubectl delete -f k8s/mysql/payment-mysql.yaml --ignore-not-found=true
+    kubectl delete -f k8s/mysql/notification-mysql.yaml --ignore-not-found=true
     
     echo ""
     echo "Waiting for all resources to be deleted..."

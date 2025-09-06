@@ -37,9 +37,17 @@ build_images() {
     echo "Building payment-service..."
     docker build -t payment-service:latest ./payment-service/
     
+    # Build notification-service
+    echo "Building notification-service..."
+    docker build -t notification-service:latest ./notification-service/
+    
     # Build frontend
     echo "Building frontend..."
     docker build -t frontend:latest ./frontend/
+    
+    # Build gateway
+    echo "Building gateway..."
+    docker build -t gateway:latest ./gateway/
     
     echo "✓ All images built successfully"
 }
@@ -53,14 +61,30 @@ deploy_mysql() {
     kubectl apply -f k8s/mysql/hotel-mysql.yaml
     kubectl apply -f k8s/mysql/booking-mysql.yaml
     kubectl apply -f k8s/mysql/payment-mysql.yaml
+    kubectl apply -f k8s/mysql/notification-mysql.yaml
     
     echo "Waiting for MySQL databases to be ready..."
     kubectl wait --for=condition=ready pod -l app=auth-mysql --timeout=300s
     kubectl wait --for=condition=ready pod -l app=hotel-mysql --timeout=300s
     kubectl wait --for=condition=ready pod -l app=booking-mysql --timeout=300s
     kubectl wait --for=condition=ready pod -l app=payment-mysql --timeout=300s
+    kubectl wait --for=condition=ready pod -l app=notification-mysql --timeout=300s
     
     echo "✓ MySQL databases are ready"
+}
+
+# Function to deploy Kafka
+deploy_kafka() {
+    echo ""
+    echo "Deploying Kafka and Zookeeper..."
+    
+    kubectl apply -f k8s/kafka/kafka.yaml
+    
+    echo "Waiting for Kafka to be ready..."
+    kubectl wait --for=condition=ready pod -l app=zookeeper --timeout=300s
+    kubectl wait --for=condition=ready pod -l app=kafka --timeout=300s
+    
+    echo "✓ Kafka is ready"
 }
 
 # Function to deploy backend services
@@ -72,12 +96,14 @@ deploy_backend() {
     kubectl apply -f k8s/backend/hotel-service.yaml
     kubectl apply -f k8s/backend/booking-service.yaml
     kubectl apply -f k8s/backend/payment-service.yaml
+    kubectl apply -f k8s/backend/notification-service.yaml
     
     echo "Waiting for backend services to be ready..."
     kubectl wait --for=condition=ready pod -l app=auth-service --timeout=300s
     kubectl wait --for=condition=ready pod -l app=hotel-service --timeout=300s
     kubectl wait --for=condition=ready pod -l app=booking-service --timeout=300s
     kubectl wait --for=condition=ready pod -l app=payment-service --timeout=300s
+    kubectl wait --for=condition=ready pod -l app=notification-service --timeout=300s
     
     echo "✓ Backend services are ready"
 }
@@ -150,6 +176,7 @@ main() {
     check_minikube
     build_images
     deploy_mysql
+    deploy_kafka
     deploy_backend
     deploy_frontend
     show_status

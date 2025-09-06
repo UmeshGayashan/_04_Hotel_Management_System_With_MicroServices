@@ -14,6 +14,9 @@ This guide provides instructions to deploy the Hotel Management System using Kub
 ```bash
 minikube start
 ```
+```bash
+minikube delete && minikube start --driver=docker
+```
 
 ### 2. Deploy the Application
 ```bash
@@ -108,9 +111,12 @@ kubectl wait --for=condition=ready pod -l app=phpmyadmin --timeout=300s
 - **Hotel Service**: 8002
 - **Booking Service**: 8003
 - **Payment Service**: 8004
+- **Notification Service**: 8005
 - **Gateway**: 80 (exposed on 30080)
 - **Frontend**: 3000 (exposed on 30001)
 - **phpMyAdmin**: 80 (exposed on 30090)
+- **Kafka**: 9092
+- **Zookeeper**: 2181
 
 ## Monitoring and Troubleshooting
 
@@ -320,10 +326,35 @@ Frontend (30001) → Gateway (30080) → Backend Services
                                    ├── Auth Service (8001)
                                    ├── Hotel Service (8002)
                                    ├── Booking Service (8003)
-                                   └── Payment Service (8004)
-                                           │
-                                           ├── auth-mysql
-                                           ├── hotel-mysql
-                                           ├── booking-mysql
-                                           └── payment-mysql
+                                   ├── Payment Service (8004)
+                                   └── Notification Service (8005) ← Kafka Events
+                                           │                              ↑
+                                           ├── auth-mysql                 │
+                                           ├── hotel-mysql                │
+                                           ├── booking-mysql              │
+                                           ├── payment-mysql              │
+                                           ├── notification-mysql         │
+                                           └─── Kafka + Zookeeper ────────┘
+                                                (Event Streaming)
 ```
+
+## Kafka Integration
+
+The system now includes a notification service that uses Apache Kafka for event-driven communication:
+
+### Event Types
+- **User Events**: User registration, profile updates
+- **Booking Events**: Booking creation, updates, cancellations
+- **Service Events**: New hotel services, service updates
+- **Payment Events**: Payment processing, refunds
+
+### Real-time Notifications
+- WebSocket connections for instant notifications
+- Browser push notifications (when permission granted)
+- Event-driven architecture for decoupled communication
+
+### Notification Service Features
+- REST API for notification management (`/api/v1/notifications`)
+- WebSocket endpoint for real-time updates (`/ws/{user_id}`)
+- Kafka consumer for processing events from other services
+- MySQL database for notification persistence
